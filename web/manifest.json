@@ -1,11 +1,11 @@
 {
-    "name": "azkar",
-    "short_name": "azkar",
+    "name": "المهندس عادل خالد عادل",
+    "short_name": "أذكاري",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0A5A47",
+    "theme_color": "#0E7A5F",
+    "description": "تطبيق إسلامي متكامل للأذكار والأدعية والقرآن الكريم",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

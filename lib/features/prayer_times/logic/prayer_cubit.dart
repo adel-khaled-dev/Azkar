@@ -116,9 +116,35 @@ class PrayerCubit extends Cubit<PrayerState> {
 
   Future<void> _schedulePrayers(PrayerTimesDay day) async {
     await _notificationService.cancelPrayerNotifications();
-    for (final p in day.prayers) {
+    final now = DateTime.now();
+    final today = day;
+    // حساب مواقيت الغد لجدولة الصلوات التي انقضت اليوم
+    final tomorrow = _repository.calculate(
+      day.city,
+      date: now.add(const Duration(days: 1)),
+    );
+
+    // 1. جدولة صلوات اليوم المتبقية
+    for (final p in today.prayers) {
       if (p.key == 'sunrise') continue; // لا أذان للشروق
-      if (p.time.isAfter(DateTime.now())) {
+      if (p.time.isAfter(now)) {
+        await _notificationService.schedulePrayer(
+          prayerKey: p.key,
+          prayerName: p.name,
+          time: p.time,
+          cityName: day.city.nameAr,
+        );
+      }
+    }
+
+    // 2. إذا كانت صلاة اليوم قد مضت وقتها، نجدول صلاة الغد المقابلة لها تلقائياً
+    for (final p in tomorrow.prayers) {
+      if (p.key == 'sunrise') continue;
+      final todayPrayer = today.prayers.firstWhere(
+        (item) => item.key == p.key,
+        orElse: () => p,
+      );
+      if (todayPrayer.time.isBefore(now)) {
         await _notificationService.schedulePrayer(
           prayerKey: p.key,
           prayerName: p.name,

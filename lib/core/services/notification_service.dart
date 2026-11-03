@@ -168,6 +168,7 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
+      enableVibration: true,
       icon: '@mipmap/ic_launcher',
     );
 

@@ -1,6 +1,6 @@
 package com.adelkhalid.azkar
 
-import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
@@ -21,65 +21,52 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "shareApkViaWhatsApp" -> {
-                    // تشغيل النسخ في خلفية سريعة لعدم تجميد الشاشة
                     thread {
                         try {
                             val appInfo = packageManager.getApplicationInfo(packageName, 0)
                             val apkSource = File(appInfo.publicSourceDir)
 
-                            val cacheDir = File(cacheDir, "shared_apk")
-                            if (!cacheDir.exists()) {
-                                cacheDir.mkdirs()
+                            val cacheFolder = File(this@MainActivity.cacheDir, "shared_apk")
+                            if (!cacheFolder.exists()) {
+                                cacheFolder.mkdirs()
                             }
-                            val apkCopy = File(cacheDir, "azkar.apk")
+                            val apkCopy = File(cacheFolder, "azkar.apk")
 
-                            // نسخ الملف فقط إذا لم يكن موجوداً أو تغير حجمه
+                            // نسخ فائق السرعة عبر قنوات الذاكرة
                             if (!apkCopy.exists() || apkCopy.length() != apkSource.length()) {
-                                FileInputStream(apkSource).use { input ->
-                                    FileOutputStream(apkCopy).use { output ->
-                                        input.copyTo(output)
+                                FileInputStream(apkSource).use { srcStream ->
+                                    FileOutputStream(apkCopy).use { dstStream ->
+                                        val inChannel = srcStream.channel
+                                        val outChannel = dstStream.channel
+                                        outChannel.transferFrom(inChannel, 0, inChannel.size())
                                     }
                                 }
                             }
 
                             val apkUri: Uri = FileProvider.getUriForFile(
-                                this,
+                                this@MainActivity,
                                 "${packageName}.fileprovider",
                                 apkCopy
                             )
 
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "application/vnd.android.package-archive"
+                                type = "*/*"
                                 putExtra(Intent.EXTRA_STREAM, apkUri)
-                                putExtra(Intent.EXTRA_TEXT, "🌙 تطبيق أذكاري — تطبيق إسلامي متكامل\nصنع بكل حب — عادل خالد ❤️")
+                                clipData = ClipData.newRawUri("azkar.apk", apkUri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+
+                            val chooser = Intent.createChooser(shareIntent, "إرسال ملف التطبيق (APK)").apply {
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
 
                             runOnUiThread {
-                                var launched = false
-                                for (waPkg in listOf("com.whatsapp", "com.whatsapp.w4b")) {
-                                    try {
-                                        val intent = Intent(shareIntent).apply {
-                                            setPackage(waPkg)
-                                        }
-                                        startActivity(intent)
-                                        launched = true
-                                        break
-                                    } catch (_: ActivityNotFoundException) {
-                                        // جرب النسخة التالية
-                                    }
-                                }
-
-                                if (!launched) {
-                                    val chooser = Intent.createChooser(shareIntent, "مشاركة ملف التطبيق (APK)")
-                                    startActivity(chooser)
-                                }
-
+                                startActivity(chooser)
                                 result.success(true)
                             }
                         } catch (e: Exception) {
                             runOnUiThread {
-                                result.error("SHARE_ERROR", e.message, null)
+                                result.error("SHARE_ERROR", e.localizedMessage ?: e.toString(), null)
                             }
                         }
                     }

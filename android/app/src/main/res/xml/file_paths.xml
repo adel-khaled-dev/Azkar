@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- مشاركة ملفات من مجلد cache الخاص بالتطبيق -->
-    <cache-path name="shared_apk" path="shared_apk/" />
-    <!-- مشاركة من external cache أيضاً -->
-    <external-cache-path name="external_shared" path="." />
+    <cache-path name="cache" path="." />
+    <external-cache-path name="external_cache" path="." />
+    <files-path name="files" path="." />
 </paths>

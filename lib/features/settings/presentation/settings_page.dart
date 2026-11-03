@@ -35,13 +35,12 @@ class SettingsPage extends StatelessWidget {
     try {
       await _apkChannel.invokeMethod('shareApkViaWhatsApp');
     } catch (e) {
-      // fallback: فتح واتساب بنص فقط
       if (context.mounted) {
-        const msg = '🌙 تطبيق أذكاري — تطبيق إسلامي متكامل\nصنع بكل حب — عادل خالد ❤️';
-        final encoded = Uri.encodeComponent(msg);
-        await launchUrl(
-          Uri.parse('whatsapp://send?text=$encoded'),
-          mode: LaunchMode.externalApplication,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تعذّر فتح نافذة المشاركة: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
